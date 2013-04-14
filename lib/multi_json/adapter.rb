@@ -8,11 +8,19 @@ module MultiJson
     class << self
 
       def defaults(action, value)
-        metaclass = class << self; self; end
+        define_metaclass_method("default_#{action}_options"){ value }
+      end
 
-        metaclass.instance_eval do
-          define_method("default_#{action}_options"){ value }
+      def dependencies(&block)
+        define_metaclass_method 'resolve_dependencies!' do
+          return if @_dependencies_resolved
+          block.call
+          @_dependencies_resolved = true
         end
+      end
+
+      def activate(&block)
+        define_metaclass_method 'run_load_hooks!', &block
       end
 
       def load(string, options={})
@@ -36,6 +44,16 @@ module MultiJson
       def collect_options(method, overrides, args)
         global, local = *[MultiJson, self].map{ |r| r.send(method, *args) }
         local.merge(global).merge(overrides)
+      end
+
+    private
+
+      def metaclass
+        class << self; self; end
+      end
+
+      def define_metaclass_method(*args, &block)
+        metaclass.instance_eval{ define_method(*args, &block) }
       end
 
     end

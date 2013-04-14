@@ -1,4 +1,3 @@
-require 'oj' unless defined?(::Oj)
 require 'multi_json/adapter'
 
 module MultiJson
@@ -8,10 +7,10 @@ module MultiJson
       defaults :load, :mode => :strict, :symbolize_keys => false
       defaults :dump, :mode => :compat, :time_format => :ruby
 
-      ParseError = if defined?(::Oj::ParseError)
-        ::Oj::ParseError
-      else
-        SyntaxError
+      dependencies do
+        gem 'oj', '~> 2.0'
+        require 'oj'
+        ParseError = ::Oj::ParseError
       end
 
       def load(string, options={})

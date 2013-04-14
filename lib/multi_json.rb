@@ -86,7 +86,9 @@ module MultiJson
   # * <tt>:gson</tt> (JRuby only)
   # * <tt>:jr_jackson</tt> (JRuby only)
   def use(new_adapter)
-    @adapter = load_adapter(new_adapter)
+    adapter = load_adapter(new_adapter)
+    resolve_dependencies_and_run_hooks! adapter
+    @adapter = adapter
   end
   alias adapter= use
   alias engine= use
@@ -151,6 +153,16 @@ module MultiJson
     require "multi_json/adapters/#{name}"
     klass_name = name.split('_').map(&:capitalize) * ''
     MultiJson::Adapters.const_get klass_name
+  end
+
+  def resolve_dependencies_and_run_hooks!(adapter)
+    if adapter.respond_to?(:resolve_dependencies!)
+      adapter.resolve_dependencies!
+    end
+
+    if adapter.respond_to?(:run_load_hooks!)
+      adapter.run_load_hooks!
+    end
   end
 
 end
