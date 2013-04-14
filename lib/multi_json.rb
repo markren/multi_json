@@ -28,7 +28,7 @@ module MultiJson
   end
 
   ALIASES = {
-    'jrjackson' => :jr_jackson
+    'jrjackson' => 'jr_jackson'
   }
 
   REQUIREMENT_MAP = [
@@ -94,10 +94,7 @@ module MultiJson
   def load_adapter(new_adapter)
     case new_adapter
     when String, Symbol
-      new_adapter = ALIASES.fetch(new_adapter.to_s, new_adapter)
-      require "multi_json/adapters/#{new_adapter}"
-      klass_name = new_adapter.to_s.split('_').map(&:capitalize) * ''
-      MultiJson::Adapters.const_get(klass_name)
+      resolve_adapter_by_name new_adapter
     when NilClass, FalseClass
       load_adapter default_adapter
     when Class, Module
@@ -147,5 +144,13 @@ module MultiJson
     self.adapter = old_adapter
   end
   alias with_engine with_adapter
+
+  def resolve_adapter_by_name(name)
+    name = name.to_s
+    name = ALIASES.fetch(name, name)
+    require "multi_json/adapters/#{name}"
+    klass_name = name.split('_').map(&:capitalize) * ''
+    MultiJson::Adapters.const_get klass_name
+  end
 
 end
